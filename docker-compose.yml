@@ -1,0 +1,46 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        # CPU is the default. For NVIDIA GPUs use the overlay:
+        #   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+        LLAMA_IMAGE: ${LLAMA_IMAGE:-ghcr.io/ggml-org/llama.cpp:server}
+        LIVEKIT_IMAGE: ${LIVEKIT_IMAGE:-livekit/livekit-server:latest}
+        PYTHON_BASE: ${PYTHON_BASE:-python:3.11-slim}
+        TORCH_INDEX_URL: ${TORCH_INDEX_URL:-https://download.pytorch.org/whl/cpu}
+    env_file:
+      - .env
+    environment:
+      LIVEKIT_URL: ${LIVEKIT_URL:-ws://127.0.0.1:7880}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-devkey}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-secret}
+      STT_PROVIDER: ${STT_PROVIDER:-nemotron}
+      WAKE_WORD: ${WAKE_WORD:-}
+      WAKE_WORD_THRESHOLD: ${WAKE_WORD_THRESHOLD:-0.5}
+      LLAMA_HF_REPO: ${LLAMA_HF_REPO:-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL}
+      LLAMA_OFFLINE: ${LLAMA_OFFLINE:-}
+      LLAMA_MODEL_PATH: ${LLAMA_MODEL_PATH:-}
+      LLAMA_MODEL: ${LLAMA_MODEL:-gemma-4-e2b}
+      LLAMA_MODEL_ALIAS: ${LLAMA_MODEL_ALIAS:-gemma-4-e2b}
+      LLAMA_CTX_SIZE: ${LLAMA_CTX_SIZE:-16384}
+      LLAMA_N_GPU_LAYERS: ${LLAMA_N_GPU_LAYERS:-0}
+      DEVICE: ${DEVICE:-cpu}
+    ports:
+      - "8081:8080"
+      - "${LIVEKIT_BIND_PORT:-7880}:7880"
+      - "${LIVEKIT_RTC_PORT:-7881}:7881"
+      # WebRTC media over UDP. The host port must equal the container port
+      # because LiveKit advertises this exact port in its ICE candidates.
+      - "${LIVEKIT_UDP_PORT:-7882}:7882/udp"
+    volumes:
+      - models:/models
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  models:

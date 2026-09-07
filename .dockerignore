@@ -1,0 +1,9 @@
+.git
+.venv
+.env
+**/__pycache__
+**/*.pyc
+frontend/.next
+frontend/node_modules
+local_voice_ai.egg-info
+models
