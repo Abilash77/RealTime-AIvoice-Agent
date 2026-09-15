@@ -286,7 +286,12 @@ class TestServeFirstBoot:
                 assert data["children"][0]["ready"] is True
         finally:
             # SIGTERM exercises the real coordinated-shutdown path.
-            os.kill(os.getpid(), signal.SIGTERM)
+            if sys.platform != "win32":
+                os.kill(os.getpid(), signal.SIGTERM)
+            else:
+                for t in asyncio.all_tasks():
+                    if t.get_name() == "supervisor":
+                        t.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 rc = await asyncio.wait_for(serve_task, timeout=10)
                 assert rc == 0

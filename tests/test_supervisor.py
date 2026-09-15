@@ -104,9 +104,10 @@ class TestSpawnAndReady:
 
         assert child.process and child.process.returncode is not None
         # PID should no longer be a live process
-        with pytest.raises(ProcessLookupError):
-            import os
-            os.kill(pid, 0)
+        if sys.platform != "win32":
+            with pytest.raises(ProcessLookupError):
+                import os
+                os.kill(pid, 0)
 
 
 class TestReadinessTimeout:
